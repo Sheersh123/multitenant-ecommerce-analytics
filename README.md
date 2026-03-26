@@ -250,20 +250,3 @@ docker exec etl node etl_job.js
 
 ---
 
-## Author
-
-<div align="center">
-
-**Sheersh** | B.Tech 2025 | Pune, India
-
-[![GitHub](https://img.shields.io/badge/GitHub-Sheersh123-181717?style=for-the-badge&logo=github)](https://github.com/Sheersh123)
-
-</div>
-
----
-
-<div align="center">
-
-![Footer](https://capsule-render.vercel.app/api?type=waving&color=0:0f3460,50:16213e,100:1a1a2e&height=100&section=footer)
-
-</div>
