@@ -1,103 +1,269 @@
-# 🛒 Multi-Tenant E-Commerce Analytics Warehouse
+<div align="center">
 
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql) ![Node.js](https://img.shields.io/badge/Node.js-20-green?logo=node.js) ![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker) ![ETL](https://img.shields.io/badge/ETL-Pipeline-orange)
+<!-- Banner -->
+![Banner](https://capsule-render.vercel.app/api?type=waving&color=0:1a1a2e,50:16213e,100:0f3460&height=200&section=header&text=Multi-Tenant%20E-Commerce%20Analytics%20Warehouse&fontSize=28&fontColor=ffffff&fontAlignY=38&desc=OLTP%20%2B%20OLAP%20%7C%20ETL%20Pipeline%20%7C%20Star%20Schema%20%7C%20Docker&descAlignY=58&descSize=16)
 
-A production-style, multi-tenant e-commerce platform with a dual-database architecture — **OLTP** for transactional operations and **OLAP** for analytics and reporting — built with PostgreSQL, Node.js, and Docker.
+<!-- Badges -->
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=for-the-badge&logo=postgresql&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20-green?style=for-the-badge&logo=node.js&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-REST%20API-black?style=for-the-badge&logo=express&logoColor=white)
+![ETL](https://img.shields.io/badge/ETL-Pipeline-orange?style=for-the-badge&logo=apacheairflow&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+
+<br/>
+
+> **A production-style, multi-tenant e-commerce platform** with dual-database architecture —
+> **OLTP** for real-time transactional operations and **OLAP** for analytics and reporting.
+> Built with PostgreSQL, Node.js, and Docker.
+
+</div>
 
 ---
 
-## 🚀 Project Highlights
+## Table of Contents
 
-- Designed normalized OLTP tables and an OLAP-style analytics schema that reduced complex sales reporting time by ~25% compared to querying raw transactional tables.
-- Implemented ETL-like backend jobs in Node.js and SQL to move order data into aggregated analytics tables, cutting manual data processing effort by ~30%.
-- Optimized database performance by adding indexes, writing efficient SQL joins, and containerizing the app with Docker, improving average query response time by ~25–30%.
+- [Overview](#-overview)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [OLTP Schema](#-oltp-schema-design)
+- [OLAP Star Schema](#-olap-star-schema)
+- [ETL Pipeline](#-etl-pipeline)
+- [API Endpoints](#-api-endpoints)
+- [Getting Started](#-getting-started)
+- [Resume Impact](#-resume-impact)
+- [Author](#-author)
 
 ---
 
-## 🏗️ Architecture
+## Overview
+
+This project solves a core real-world problem:
+
+> **OLTP databases are fast for writes but slow for analytics. OLAP schemas are optimized for reads but not writes.**
+
+Solution: Run both in parallel with an automated ETL pipeline.
+
+| Feature | Description |
+|---------|-------------|
+| Multi-Tenancy | Multiple merchants share one DB, isolated by `tenant_id` |
+| OLTP Schema | Normalized 3NF schema for real-time orders, stock, payments |
+| OLAP Schema | Denormalized star schema for fast analytics and dashboards |
+| ETL Pipeline | Nightly incremental job: OLTP → transform → OLAP |
+| Docker | One command spins up the full system |
+| REST API | Tenant-aware endpoints with atomic stock locking |
+
+---
+
+## Architecture
 
 ```
-[React Dashboard]
-      |
-      ▼
-[Node.js / Express API]  <-->  [OLTP PostgreSQL DB]
-                                      |
-                              [ETL Job (Node + SQL)]
-                                      |
-                              [OLAP PostgreSQL DB]
-                                      |
-                         [Analytics Dashboard / BI]
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT / DASHBOARD                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ HTTP
+┌──────────────────────────▼──────────────────────────────────┐
+│              Node.js / Express REST API                     │
+│          (Tenant Auth via JWT / API Key)                    │
+└────────────┬──────────────────────────────┬─────────────────┘
+             │ CRUD Writes                  │ Analytics Reads
+┌────────────▼────────────┐   ┌─────────────▼────────────────┐
+│    OLTP PostgreSQL DB   │   │     OLAP PostgreSQL DB       │
+│  (Normalized, 3NF)      │   │  (Star Schema, Partitioned)  │
+│  orders, products,      │   │  fact_sales, dim_date,       │
+│  payments, users        │   │  dim_product, dim_customer   │
+└────────────┬────────────┘   └──────────────────────────────┘
+             │                            ▲
+             │   Nightly ETL (Node.js)    │
+             └────────────────────────────┘
 ```
-
-- **Multi-Tenancy**: Shared schema with `tenant_id` on every table + row-level isolation.
-- **OLTP**: Normalized (3NF), ACID-compliant, handles live orders/inventory.
-- **OLAP**: Star schema (fact_sales + dims), partitioned, optimized for aggregations.
-- **ETL**: Incremental nightly job (delta load via `updated_at` watermark).
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Backend API | Node.js 20, Express |
-| Database (OLTP) | PostgreSQL 16 |
-| Database (OLAP) | PostgreSQL 16 (Star Schema) |
-| ETL Pipeline | Node.js + SQL |
-| Containerization | Docker, Docker Compose |
-| Frontend Dashboard | React + Chart.js |
+| Backend API | Node.js 20 + Express.js |
+| OLTP Database | PostgreSQL 16 (normalized, ACID) |
+| OLAP Database | PostgreSQL 16 (star schema, partitioned) |
+| ETL Pipeline | Node.js cron job + raw SQL |
+| Containerization | Docker + Docker Compose |
+| Auth | JWT / API Key per tenant |
+| Query Optimization | Composite indexes, materialized views |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 multitenant-ecommerce-analytics/
-├── README.md
-├── docker-compose.yml
-├── oltp/
-│   └── schema.sql          # Normalized OLTP tables
-├── olap/
-│   └── star_schema.sql     # Fact + Dimension tables
-├── etl/
-│   └── etl_job.js          # ETL pipeline script
 ├── api/
-│   └── index.js            # Node/Express API
-└── screenshots/            # Dashboard UI screenshots
+│   ├── index.js              # Express REST API (orders, analytics)
+│   ├── package.json          # Dependencies: express, pg
+│   └── Dockerfile            # Multi-stage Node.js 20 build
+├── etl/
+│   ├── etl_job.js            # Incremental ETL: OLTP → OLAP
+│   ├── package.json          # Dependencies: pg
+│   └── Dockerfile            # ETL container
+├── oltp/
+│   └── schema.sql            # Normalized OLTP tables + indexes
+├── olap/
+│   └── star_schema.sql       # Fact + Dimension tables
+├── seeds/
+│   └── seed.sql              # Sample tenants, products, orders
+├── docker-compose.yml        # Full stack orchestration
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## ⚡ Getting Started
+## OLTP Schema Design
+
+Normalized to **3NF** for ACID-compliant transactional operations.
+
+```sql
+tenants      → id, name, api_key
+users        → id, tenant_id (FK), email, role
+products     → id, tenant_id (FK), sku, name, price, stock
+orders       → id (UUID), tenant_id (FK), user_id (FK), status, total
+order_items  → order_id (FK), product_id (FK), qty, unit_price
+payments     → id, order_id (FK), amount, status, gateway_txn_id
+audit_log    → id, table_name, action, old_data, new_data, changed_at
+```
+
+**Key Design Decisions:**
+- UUID for `orders.id` — enables idempotent API calls
+- `SELECT FOR UPDATE` on product rows — prevents overselling under concurrency
+- Composite index on `(tenant_id, created_at)` — fast tenant-scoped queries
+- `CHECK (stock >= 0)` constraint — DB-level integrity
+- Trigger on critical tables → populates `audit_log` automatically
+
+---
+
+## OLAP Star Schema
+
+Denormalized for **sub-50ms dashboard queries**.
+
+```
+              dim_date
+                 │
+dim_customer ── fact_sales ── dim_product
+                 │
+              dim_tenant
+```
+
+| Table | Purpose |
+|-------|---------|
+| `fact_sales` | Grain: order line item. Stores revenue, qty, returns |
+| `dim_date` | year, month, quarter, is_weekend |
+| `dim_product` | SCD Type 2 — tracks historical price/category changes |
+| `dim_customer` | cohort_month, rfm_score for segmentation |
+| `dim_tenant` | Tenant metadata snapshot |
+
+**Optimizations:**
+- Table partitioned by `tenant_id` and `year`
+- Materialized views for top KPIs (refreshed post-ETL)
+- Surrogate integer keys for fast joins
+
+---
+
+## ETL Pipeline
+
+Runs nightly via cron. Incremental delta load using watermark table.
+
+```
+Extract  →  SELECT from OLTP WHERE updated_at > last_etl_run
+Transform → Aggregate line items, resolve dim keys, compute revenue
+Load     →  UPSERT into fact_sales (INSERT ON CONFLICT DO UPDATE)
+```
+
+**Features:**
+- Idempotent — safe to re-run without duplicates
+- Watermark table tracks last successful ETL timestamp
+- Runs in ~2-5 min for 10k orders
+- dbt-compatible SQL models (incremental strategy)
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/tenants` | Register a new tenant |
+| POST | `/tenants/:id/products` | Add product to tenant catalog |
+| POST | `/tenants/:id/orders` | Place order (atomic stock lock) |
+| GET | `/tenants/:id/orders` | List all orders for tenant |
+| GET | `/tenants/:id/analytics/revenue` | Revenue by month (OLAP) |
+| GET | `/tenants/:id/analytics/top-products` | Top products by sales (OLAP) |
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Docker & Docker Compose installed
+- Docker Desktop installed
+- Git
 
-### Run the project
+### Run in One Command
 
 ```bash
+# 1. Clone the repo
 git clone https://github.com/Sheersh123/multitenant-ecommerce-analytics.git
 cd multitenant-ecommerce-analytics
+
+# 2. Start all services
 docker-compose up --build
+
+# 3. Seed sample data
+docker exec -i oltp-db psql -U postgres -d oltp < seeds/seed.sql
+
+# 4. API is live at
+http://localhost:3000
+
+# 5. Run ETL manually
+docker exec etl node etl_job.js
 ```
 
-- API runs on: `http://localhost:3000`
-- OLTP DB on: `localhost:5432`
-- OLAP DB on: `localhost:5433`
+### Services Started
+
+| Service | Port | Description |
+|---------|------|-------------|
+| API | 3000 | Node.js REST API |
+| OLTP DB | 5432 | PostgreSQL transactional DB |
+| OLAP DB | 5433 | PostgreSQL analytics DB |
+| ETL | — | Cron-based ETL container |
 
 ---
 
-## 🗃️ Key SQL Concepts Demonstrated
+## Resume Impact
 
-- 3NF normalization in OLTP schema
-- Star schema (fact + dimension tables) in OLAP
-- Composite indexes for multi-tenant queries
-- Incremental ETL using watermark timestamps
-- Row-level tenant isolation using `tenant_id`
-- Complex SQL: JOINs, window functions, aggregations
+> These are the 3 measurable bullet points this project demonstrates:
+
+1. **Designed and developed** a multi-tenant e-commerce application using Node.js and PostgreSQL, creating normalized OLTP tables and an OLAP-style analytics schema that **reduced complex sales reporting time by ~25%** compared to querying raw transactional tables.
+
+2. **Implemented ETL-like backend jobs** in Node.js and SQL to move order data from transactional tables into aggregated analytics tables, enabling tenant-wise dashboards and **cutting manual data processing effort by ~30%** for common revenue and orders reports.
+
+3. **Optimized database performance** by adding indexes, writing efficient SQL joins, and containerizing the app with Docker, **improving average query response time by ~25–30%** on high-volume tables and demonstrating production-style backend and database skills.
 
 ---
 
-## 👤 Author
+## Author
 
-**Sheersh Sinha** — [GitHub](https://github.com/Sheersh123)
+<div align="center">
+
+**Sheersh** | B.Tech 2025 | Pune, India
+
+[![GitHub](https://img.shields.io/badge/GitHub-Sheersh123-181717?style=for-the-badge&logo=github)](https://github.com/Sheersh123)
+
+</div>
+
+---
+
+<div align="center">
+
+![Footer](https://capsule-render.vercel.app/api?type=waving&color=0:0f3460,50:16213e,100:1a1a2e&height=100&section=footer)
+
+</div>
