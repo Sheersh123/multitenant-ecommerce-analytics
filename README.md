@@ -237,16 +237,3 @@ docker exec etl node etl_job.js
 | ETL | — | Cron-based ETL container |
 
 ---
-
-## Resume Impact
-
-> These are the 3 measurable bullet points this project demonstrates:
-
-1. **Designed and developed** a multi-tenant e-commerce application using Node.js and PostgreSQL, creating normalized OLTP tables and an OLAP-style analytics schema that **reduced complex sales reporting time by ~25%** compared to querying raw transactional tables.
-
-2. **Implemented ETL-like backend jobs** in Node.js and SQL to move order data from transactional tables into aggregated analytics tables, enabling tenant-wise dashboards and **cutting manual data processing effort by ~30%** for common revenue and orders reports.
-
-3. **Optimized database performance** by adding indexes, writing efficient SQL joins, and containerizing the app with Docker, **improving average query response time by ~25–30%** on high-volume tables and demonstrating production-style backend and database skills.
-
----
-
