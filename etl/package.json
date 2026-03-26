@@ -1,0 +1,12 @@
+{
+  "name": "etl-job",
+  "version": "1.0.0",
+  "description": "Incremental ETL pipeline: OLTP to OLAP",
+  "main": "etl_job.js",
+  "scripts": {
+    "start": "node etl_job.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}
