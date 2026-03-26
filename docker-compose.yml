@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  oltp-db:
+    image: postgres:16-alpine
+    container_name: oltp_postgres
+    environment:
+      POSTGRES_DB: oltp_ecommerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - oltp_data:/var/lib/postgresql/data
+      - ./oltp/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  olap-db:
+    image: postgres:16-alpine
+    container_name: olap_postgres
+    environment:
+      POSTGRES_DB: olap_ecommerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5433:5432'
+    volumes:
+      - olap_data:/var/lib/postgresql/data
+      - ./olap/star_schema.sql:/docker-entrypoint-initdb.d/star_schema.sql
+
+  api:
+    build: ./api
+    container_name: ecommerce_api
+    ports:
+      - '3000:3000'
+    environment:
+      OLTP_DB_URL: postgres://postgres:postgres@oltp-db:5432/oltp_ecommerce
+      OLAP_DB_URL: postgres://postgres:postgres@olap-db:5433/olap_ecommerce
+    depends_on:
+      - oltp-db
+      - olap-db
+
+  etl:
+    build: ./etl
+    container_name: etl_job
+    environment:
+      OLTP_DB_URL: postgres://postgres:postgres@oltp-db:5432/oltp_ecommerce
+      OLAP_DB_URL: postgres://postgres:postgres@olap-db:5433/olap_ecommerce
+    depends_on:
+      - oltp-db
+      - olap-db
+
+volumes:
+  oltp_data:
+  olap_data:
